@@ -141,6 +141,7 @@ pls-cli upload model.zip --json
 | `--collider-scale` | `0.3` / `2` / `5` / `10` / `100` | `2.0` | Collision mesh scale factor. |
 | `--secure` | — | off | Enable encryption. |
 | `--json` | — | off | Write JSON result to stdout; progress messages go to stderr. |
+| `--tags` | comma-separated names | — | Tag names to assign after conversion. Missing tags are created. |
 
 ### `replace`
 
@@ -153,6 +154,83 @@ pls-cli replace <old-asset-id> new-model.glb --stage --collider --json
 ```
 
 `replace` accepts the same flags as `upload` except `--group` (the original asset ID is used instead).
+
+### `list`
+
+```bash
+# List assets in your first group
+pls-cli list
+
+# With explicit group
+pls-cli list --group=<group-uuid>
+
+# Machine-readable JSON output
+pls-cli list --group=<group-uuid> --json
+```
+
+Prints each asset's ID, status and name. Flags: `--group`, `--stage`, `--json`.
+
+> When `--group` is omitted, the CLI prints an `auto-selected group: ...` line on stdout before the result. Pass `--group` with `--json` so stdout holds only the JSON.
+
+```json
+{
+  "assets": [
+    {
+      "id": "asset-uuid",
+      "name": "example-model",
+      "status": "ready",
+      "createdAt": "2026-11-18T09:00:00Z"
+    }
+  ]
+}
+```
+
+### `delete`
+
+```bash
+pls-cli delete <asset-id>
+
+# Staging environment, JSON output
+pls-cli delete <asset-id> --stage --json
+```
+
+Deletes the asset immediately — there is no confirmation prompt and it cannot be undone. Flags: `--stage`, `--json`.
+
+```json
+{ "assetId": "asset-uuid", "deleted": true }
+```
+
+On failure, `deleted` is `false` and the exit code is 1.
+
+### `tag`
+
+Tags belong to a group. `create` and `list` take `--group` (omit it to use your first group); every `tag` subcommand accepts `--stage` and `--json`.
+
+```bash
+# Create a tag
+pls-cli tag create <name> --group=<group-uuid>
+
+# List tags in a group
+pls-cli tag list --group=<group-uuid>
+
+# Assign one or more tags to an asset (by tag UUID)
+pls-cli tag assign <tag-uuid> [tag-uuid...] --asset=<asset-id>
+```
+
+To tag a new asset in one step, pass tag **names** to `upload` or `replace` with `--tags`. Missing tags are created and all of them are assigned after conversion:
+
+```bash
+pls-cli upload model.glb --group=<group-uuid> --tags=foo,bar
+```
+
+JSON output:
+
+| Command | Shape |
+|---|---|
+| `tag create` | `{ "uuid": "...", "name": "..." }` |
+| `tag list` | `{ "tags": [ { "uuid": "...", "name": "..." } ] }` |
+| `tag assign` | `{ "assetId": "...", "tagUuids": ["..."] }` |
+| `upload` / `replace` with `--tags` | each upload file result, or the replace result, gains `"assignedTags": [ { "uuid": "...", "name": "..." } ]` |
 
 ### `version`
 
