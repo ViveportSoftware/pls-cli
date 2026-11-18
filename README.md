@@ -37,8 +37,11 @@ curl -fsSL \
   -o ~/.local/bin/pls-cli
 chmod +x ~/.local/bin/pls-cli
 
-# If ~/.local/bin is not on your PATH yet, add it (zsh shown; use ~/.bashrc for bash)
-case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc; export PATH="$HOME/.local/bin:$PATH" ;; esac
+# Put ~/.local/bin on PATH: persist it once in your shell rc (zsh shown; use ~/.bashrc
+# for bash), and for this shell. Checking the rc file, not $PATH, keeps this idempotent
+# in non-interactive shells such as `ssh host '...'` or an AI agent's.
+grep -qs '\.local/bin' ~/.zshrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+export PATH="$HOME/.local/bin:$PATH"
 
 pls-cli version
 ```
