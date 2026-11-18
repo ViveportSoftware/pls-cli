@@ -387,4 +387,4 @@ pls-cli upload model.glb
 
 ## License
 
-Internal tool — © VIVEPORT Engineering
+Internal tool — © VIVERSE
