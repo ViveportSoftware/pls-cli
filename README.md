@@ -21,28 +21,63 @@ Go to the [Releases](https://github.com/ViveportSoftware/pls-cli/releases/latest
 | Linux | `pls-cli-linux-amd64` |
 | Windows | `pls-cli-windows-amd64.exe` |
 
-**Quick install on macOS / Linux:**
+**Quick install on macOS / Linux** (latest release, no `sudo`):
 
 ```bash
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
-VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-  https://github.com/ViveportSoftware/pls-cli/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+$')
-
 case "$ARCH" in
   x86_64)        ARCH="amd64" ;;
   arm64|aarch64) ARCH="arm64" ;;
 esac
 
+mkdir -p ~/.local/bin
 curl -fsSL \
-  "https://github.com/ViveportSoftware/pls-cli/releases/download/${VERSION}/pls-cli-${OS}-${ARCH}" \
-  -o /usr/local/bin/pls-cli
+  "https://github.com/ViveportSoftware/pls-cli/releases/latest/download/pls-cli-${OS}-${ARCH}" \
+  -o ~/.local/bin/pls-cli
+chmod +x ~/.local/bin/pls-cli
 
-chmod +x /usr/local/bin/pls-cli
+# If ~/.local/bin is not on your PATH yet, add it (zsh shown; use ~/.bashrc for bash)
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc; export PATH="$HOME/.local/bin:$PATH" ;; esac
+
 pls-cli version
 ```
 
-**Windows:** download `pls-cli-windows-amd64.exe`, rename it to `pls-cli.exe`, and add it to your `PATH`.
+**Quick install on Windows** (PowerShell, latest release):
+
+```powershell
+$dir = "$env:LOCALAPPDATA\pls-cli"
+New-Item -ItemType Directory -Force $dir | Out-Null
+Invoke-WebRequest "https://github.com/ViveportSoftware/pls-cli/releases/latest/download/pls-cli-windows-amd64.exe" -OutFile "$dir\pls-cli.exe"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$dir*") { [Environment]::SetEnvironmentVariable("Path", "$userPath;$dir", "User") }
+$env:Path += ";$dir"
+pls-cli version
+```
+
+**Update:** re-run the quick install. To see whether you are behind, compare `pls-cli version` with the [latest release](https://github.com/ViveportSoftware/pls-cli/releases/latest).
+
+---
+
+## Using with an AI Agent
+
+Any coding agent that can run shell commands (Claude Code, Cursor, Codex, ...) can install and drive pls-cli. Paste this to your agent:
+
+> Install pls-cli by following the Installation section of https://github.com/ViveportSoftware/pls-cli, then run `pls-cli version`. When it is installed, ask me to log in. Never ask for my password in chat.
+
+For [Agent Skills](https://github.com/viverseofficial/viverse-sdk-skills)-compatible agents, the [`viverse-pls-cli` skill](https://github.com/viverseofficial/viverse-sdk-skills/tree/main/skills/viverse-pls-cli) covers installing, update checks, login and every command.
+
+**Notes for agents:**
+
+- **Install** with the quick install above. It needs no `sudo`, so it runs without a password prompt.
+- **Check for updates** before using an existing binary. Compare `pls-cli version` with the tag that `https://github.com/ViveportSoftware/pls-cli/releases/latest` redirects to, and ask the user before replacing the binary.
+- **Log in through the user.** The password must never appear in chat or in a command line. Ask the user to either:
+  - run `pls-cli login --email=<email>` in their own terminal (the saved credentials in `~/.pls-cli/` are then shared with you), or
+  - set `PLS_CLI_PASSWORD` in your environment, after which you run `pls-cli login --email=<email>`.
+
+  Without a terminal or a password source, `login` exits with an error instead of waiting for input.
+- **Parse results** with `--json`, and pass `--group` with it so stdout holds only the JSON. Exit code 0 means success.
+- **Never run `delete`** without the user confirming the asset ID — it is immediate and cannot be undone.
 
 ---
 
