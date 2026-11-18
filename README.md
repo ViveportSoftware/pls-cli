@@ -102,6 +102,14 @@ pls-cli status
 
 Prints your account email, account ID, environment (stage / prod), and token expiry.
 
+### `logout`
+
+```bash
+pls-cli logout
+```
+
+Deletes `~/.pls-cli/credentials.json`. The token is not revoked on the server; it stays valid until it expires. Running `logout` when you are not logged in also succeeds.
+
 ### `upload`
 
 ```bash
