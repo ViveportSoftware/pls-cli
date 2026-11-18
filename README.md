@@ -26,7 +26,8 @@ Go to the [Releases](https://github.com/ViveportSoftware/pls-cli/releases/latest
 ```bash
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
-VERSION="v1.0.0"
+VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+  https://github.com/ViveportSoftware/pls-cli/releases/latest | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+$')
 
 case "$ARCH" in
   x86_64)        ARCH="amd64" ;;
@@ -48,8 +49,8 @@ pls-cli version
 ## Quick Start
 
 ```bash
-# 1. Log in (credentials saved to ~/.pls-cli/credentials.json)
-pls-cli login --email=you@example.com --password=yourpassword
+# 1. Log in — you are prompted for your password (credentials saved to ~/.pls-cli/credentials.json)
+pls-cli login --email=you@example.com
 
 # 2. Upload a model
 pls-cli upload model.glb --group=<group-uuid>
@@ -65,11 +66,31 @@ pls-cli upload model.glb --group=<group-uuid>
 ### `login`
 
 ```bash
-pls-cli login --email=<email> --password=<password>
+# Interactive — prompts for the password without echoing it
+# (and for the email too, if --email is omitted)
+pls-cli login --email=<email>
 
 # Staging environment
-pls-cli login --stage --email=<email> --password=<password>
+pls-cli login --stage --email=<email>
 ```
+
+For security, the password is never accepted as a command-line flag, so it cannot leak
+into shell history or `ps` output. In scripts and CI, pass it in one of these ways instead:
+
+```bash
+# From stdin
+printf '%s' "$PLS_CLI_PASSWORD" | pls-cli login --email=<email> --password-stdin
+
+# From the PLS_CLI_PASSWORD environment variable
+PLS_CLI_PASSWORD="..." pls-cli login --email=<email>
+```
+
+The password is read from `--password-stdin` first, then `PLS_CLI_PASSWORD`, then an
+interactive prompt. Without a terminal and without either of the first two, `login` fails
+instead of waiting for input.
+
+> **Upgrading from v1.x:** `--password` was removed in v2.0.0. Replace
+> `--password="$PW"` with `PLS_CLI_PASSWORD="$PW" pls-cli login ...` or `--password-stdin`.
 
 Credentials are saved to `~/.pls-cli/credentials.json`. Token lifetime is 24 hours — re-run `login` when it expires.
 
@@ -137,7 +158,7 @@ pls-cli replace <old-asset-id> new-model.glb --stage --collider --json
 
 ```bash
 pls-cli version
-# pls-cli v1.0.0
+# pls-cli v2.0.0
 ```
 
 ---
@@ -221,6 +242,7 @@ status=$(echo "$result" | python3 -c "import sys,json; print(json.load(sys.stdin
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
+| `unknown flag: --password` | Script written for v1.x | Use `--password-stdin` or `PLS_CLI_PASSWORD` (see `login`) |
 | `401 Unauthorized` | Token expired | Re-run `pls-cli login` |
 | `credentials are for prod, but --stage was provided` | Environment mismatch | Re-login with `--stage` |
 | `status: "failed"` in JSON | Conversion error | Check `failedType` and `errorCode` |
