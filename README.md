@@ -1,6 +1,6 @@
 # pls-cli
 
-**Polygon Streaming CLI** — upload and replace 3D model assets to [VIVERSE](https://www.viverse.com) from the command line.
+**Polygon Streaming CLI** — upload, replace and manage 3D model assets on [VIVERSE Polygon Streaming](https://stream.viverse.com) from the command line.
 
 ```
 pls-cli upload model.glb --group=<group-uuid> --ai-enhance
