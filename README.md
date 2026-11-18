@@ -387,4 +387,4 @@ pls-cli upload model.glb
 
 ## License
 
-Internal tool — © VIVERSE
+© VIVERSE
